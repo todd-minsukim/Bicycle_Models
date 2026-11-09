@@ -45,7 +45,7 @@ class LinearTire:
  
  
 class PacejkaTire:
-    """Magic Formula: F_y = D sin(C atan(B a - E(B a - atan(B a))))
+    "Magic Formula: F_y = D sin(C atan(B a - E(B a - atan(B a))))"
  
     def __init__(self, C_alpha, Fz, mu, C=1.3, E=0.0):
         self.D = mu * Fz
