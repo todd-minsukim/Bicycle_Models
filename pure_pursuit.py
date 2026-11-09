@@ -9,7 +9,7 @@ def wrap(a):
 
 class PurePursuit:
     def __init__(self, path, params, speed, k_ld=0.3, ld_min=0.3, search_window=40,
-                 corrector=None):
+                 corrector=None, use_slip=False):
         # 파라미터
         self.path = path              # paths.py의 Path
         self.p = params               # VehicleParams (L, lr, delta_max 사용)
@@ -18,6 +18,7 @@ class PurePursuit:
         self.ld_min = ld_min
         self.window = search_window   # 최근접 점 검색 범위 [점 개수]
         self.corrector = corrector    # None이면 보정 없음 (베이스라인)
+        self.use_slip = use_slip
 
         # 상태
         self.N = len(path.x)
@@ -35,12 +36,14 @@ class PurePursuit:
         return min(k, self.N - 1)
 
     def rear_axle(self, s):
-        """상태 s(무게중심 기준) → 뒷축 위치와 헤딩
-        기구학 [x, y, psi], 동역학 [x, y, psi, vy, r] 둘 다 앞 3개가 x, y, psi"""
         x, y, yaw = s[0], s[1], s[2]
         xr = x - self.p.lr * math.cos(yaw)
         yr = y - self.p.lr * math.sin(yaw)
-        return xr, yr, yaw
+        heading = yaw
+        if self.use_slip and len(s) == 5:              # 동역학 모델일 때만
+            vy, r = s[3], s[4]
+            heading = yaw + math.atan2(vy - self.p.lr * r, self.v)   # 뒷축 속도 방향
+        return xr, yr, heading
 
     # ---------- 계산 ----------
     def find_nearest(self, xr, yr):
