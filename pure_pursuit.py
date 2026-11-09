@@ -1,18 +1,3 @@
-"""
-pure_pursuit.py
-시뮬레이터용 Pure Pursuit (ROS2 pp_tracker와 같은 알고리즘) + 보정기 연결
-
-ROS2 버전과 달라진 점
-  1. ROS2 노드/토픽/타이머 제거 → simulate()가 pp(t, s)를 직접 호출
-  2. 출력: 각속도 w  →  조향각 delta = atan(L * kappa)  (자전거 모델)
-  3. 기준점: 무게중심 상태에서 뒷축 위치를 계산해서 사용
-  4. lookahead: 고정값 → Ld = k_ld * v + ld_min (속도 비례)
-  5. 닫힌 경로면 인덱스가 끝에서 0으로 돌아감 (여러 바퀴 주행)
-  6. e_y, e_psi, kappa_cmd 등 매 스텝 기록
-  7. 조향 제한: max_w → delta_max
-  8. 보정기(corrector) 연결: delta = atan(L * kappa) + corrector(v, kappa)
-     corrector=None이면 보정 없는 베이스라인
-"""
 import math
 import numpy as np
 
