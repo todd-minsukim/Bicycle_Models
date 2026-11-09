@@ -7,12 +7,12 @@ from paths import make_oval, ARC
 from pure_pursuit import PurePursuit
 from correctors import FormulaCorrection, LUTCorrection, MLPCorrection
 
-QUICK = False     # True로 하면 속도 3개, 반복 1회만 (코드 확인용, 1~2분)
+QUICK = False     # True: 속도 3개, 반복 1회 (코드 확인용, 3~5분)
 
 
-def run(model, path, v, corrector=None, n_laps=3, dt=0.002):
+def run(model, path, v, corrector=None, use_slip=False, n_laps=3, dt=0.002):
     """한 조건으로 오벌 n_laps 바퀴 주행 → 기록 반환"""
-    pp = PurePursuit(path, model.p, speed=v, corrector=corrector)
+    pp = PurePursuit(path, model.p, speed=v, corrector=corrector, use_slip=use_slip)
     s0 = model.initial_state(x=model.p.lr, y=0.0, psi=0.0)
     T = n_laps * path.length / v
     simulate(model, s0, pp, T, dt)
@@ -28,7 +28,7 @@ def metrics(log, path, v, skip_laps=1):
     after = log["t"] > skip_laps * path.length / v
     on_arc = after & (path.seg[log["idx"]] == ARC)
     e = log["e_y"]
-    steer_rate = np.diff(log["delta"]) / np.diff(log["t"])      # 조향 변화율 [rad/s]
+    steer_rate = np.diff(log["delta"]) / np.diff(log["t"])
     return {
         "arc_rms": rms(e[on_arc]),
         "arc_max": float(np.max(np.abs(e[on_arc]))),
@@ -66,81 +66,115 @@ if __name__ == "__main__":
 
     kmax = np.max(np.abs(path.kappa))
     ay_ratio = np.array([v ** 2 * kmax / (p.mu * G) for v in speeds])
+    exps = [("E1", "linear"), ("E2", "pacejka")]
+    modes = ["yaw", "slip"]
     ctrl_names = ["PP", "Formula", "LUT", "MLP"]
 
-    # 참고선: 기구학 모델 (동역학 효과 없음)
+    # 참고선: 기구학 모델
     print("Kinematic 참고선 ...")
     kin = np.array([metrics(run(KinematicBicycle(p), path, v), path, v)["arc_rms"]
                     for v in speeds])
 
-    results = {}      # results[(실험, 제어기)] = [[seed0 속도별 dict], [seed1 ...], ...]
-    for exp, tire in [("E1", "linear"), ("E2", "pacejka")]:
+    # ---------------- 주행 ----------------
+    results = {}      # results[(실험, 헤딩, 제어기)] = [[seed0 속도별 dict], ...]
+    for exp, tire in exps:
         model = DynamicBicycle(p, tire=tire)
 
-        # 보정 없는 PP: 학습이 없어서 결과가 seed와 무관 → 한 번만
-        print(f"\n[{exp}] {tire} / PP ...")
-        results[(exp, "PP")] = [[metrics(run(model, path, v), path, v) for v in speeds]]
+        # 보정기는 seed마다 한 번 학습해서 yaw/slip 둘 다에 사용
+        trained = {seed: train_correctors(tire, seed) for seed in seeds}
 
-        for name in ["Formula", "LUT", "MLP"]:
-            results[(exp, name)] = []
-        for seed in seeds:
-            print(f"[{exp}] {tire} / seed {seed}: 보정기 학습 ...")
-            correctors = train_correctors(tire, seed)
-            for name, c in correctors.items():
-                print(f"[{exp}] {tire} / seed {seed} / {name} 주행 ...  "
-                      f"({time.time() - t_start:.0f} s 경과)")
-                results[(exp, name)].append(
-                    [metrics(run(model, path, v, c), path, v) for v in speeds])
+        for mode in modes:
+            slip = (mode == "slip")
+            print(f"\n[{exp}/{mode}] PP ...  ({time.time() - t_start:.0f} s)")
+            results[(exp, mode, "PP")] = [
+                [metrics(run(model, path, v, None, slip), path, v) for v in speeds]]
 
-    # ---------------- 결과 표 ----------------
+            for name in ["Formula", "LUT", "MLP"]:
+                results[(exp, mode, name)] = []
+                for seed in seeds:
+                    print(f"[{exp}/{mode}] {name} seed {seed} ...  "
+                          f"({time.time() - t_start:.0f} s)")
+                    c = trained[seed][name]
+                    results[(exp, mode, name)].append(
+                        [metrics(run(model, path, v, c, slip), path, v) for v in speeds])
+
+    # ---------------- 표 ----------------
     save_dict = {"speeds": np.array(speeds), "ay_ratio": ay_ratio, "kinematic": kin}
-    for exp in ["E1", "E2"]:
-        print(f"\n===== {exp} : 원호 구간 횡오차 RMS [cm]  (평균 ± 표준편차) =====")
-        print("  a_y/μg |" + "".join(f"{n:>16s}" for n in ctrl_names) + "   | Kinematic")
-        arr = {n: to_array(results[(exp, n)], "arc_rms") * 100 for n in ctrl_names}
-        for j, r in enumerate(ay_ratio):
-            cells = "".join(f"{arr[n][:, j].mean():9.2f} ± {arr[n][:, j].std():4.2f}"
-                            for n in ctrl_names)
-            print(f"   {r:4.2f}  |{cells}   | {kin[j]*100:6.2f}")
+    for exp, _ in exps:
+        for mode in modes:
+            print(f"\n===== {exp} / heading={mode} : 원호 횡오차 RMS [cm] (평균 ± 표준편차) =====")
+            print("  a_y/μg |" + "".join(f"{n:>16s}" for n in ctrl_names) + "   | Kinematic")
+            arr = {n: to_array(results[(exp, mode, n)], "arc_rms") * 100 for n in ctrl_names}
+            for j, r in enumerate(ay_ratio):
+                cells = "".join(f"{arr[n][:, j].mean():9.2f} ± {arr[n][:, j].std():4.2f}"
+                                for n in ctrl_names)
+                print(f"   {r:4.2f}  |{cells}   | {kin[j]*100:6.2f}")
 
-        print(f"\n----- {exp} : PP 대비 원호 RMS 감소율 [%] -----")
-        for j, r in enumerate(ay_ratio):
-            base = arr["PP"][0, j]
-            cells = "".join(f"{n}: {100 * (1 - arr[n][:, j].mean() / base):6.1f}   "
-                            for n in ["Formula", "LUT", "MLP"])
-            print(f"   a_y/μg={r:4.2f}   {cells}")
+            print(f"  --- MLP vs Formula 감소율 [%] (양수 = MLP가 나음) ---")
+            for j, r in enumerate(ay_ratio):
+                f = arr["Formula"][:, j].mean()
+                m = arr["MLP"][:, j].mean()
+                print(f"   a_y/μg={r:4.2f}   {100 * (1 - m / f):6.1f}")
 
-        print(f"\n----- {exp} : 조향 변화율 RMS [rad/s] (평균) -----")
-        for j, r in enumerate(ay_ratio):
-            cells = "".join(f"{n}: {to_array(results[(exp, n)], 'steer_rate')[:, j].mean():6.3f}   "
-                            for n in ctrl_names)
-            print(f"   a_y/μg={r:4.2f}   {cells}")
+            print(f"  --- 조향 변화율 RMS [rad/s] (평균) ---")
+            for j, r in enumerate(ay_ratio):
+                cells = "".join(
+                    f"{n}: {to_array(results[(exp, mode, n)], 'steer_rate')[:, j].mean():6.3f}   "
+                    for n in ctrl_names)
+                print(f"   a_y/μg={r:4.2f}   {cells}")
 
-        for n in ctrl_names:
-            for key in ["arc_rms", "arc_max", "steer_rate"]:
-                save_dict[f"{exp}_{n}_{key}"] = to_array(results[(exp, n)], key)
+            for n in ctrl_names:
+                for key in ["arc_rms", "arc_max", "steer_rate"]:
+                    save_dict[f"{exp}_{mode}_{n}_{key}"] = to_array(results[(exp, mode, n)], key)
 
     np.savez("experiment_results.npz", **save_dict)
     print("\nsaved experiment_results.npz")
 
-    # ---------------- 그림 ----------------
-    fig, axes = plt.subplots(1, 2, figsize=(13, 4.5), sharey=True)
+    # ---------------- 그림 1: 오차 분해 (최고 속도) ----------------
+    j = len(speeds) - 1
+    bars = [("yaw", "PP", "PP"),
+            ("yaw", "Formula", "+Formula"),
+            ("yaw", "MLP", "+MLP"),
+            ("slip", "PP", "+slip"),
+            ("slip", "Formula", "+slip\n+Formula"),
+            ("slip", "MLP", "+slip\n+MLP")]
+    x = np.arange(len(bars))
+    w = 0.38
+    fig1, ax1 = plt.subplots(figsize=(8, 4))
+    for k, (exp, tire) in enumerate(exps):
+        means, stds = [], []
+        for mode, n, _ in bars:
+            a = to_array(results[(exp, mode, n)], "arc_rms")[:, j] * 100
+            means.append(a.mean()); stds.append(a.std())
+        ax1.bar(x + (k - 0.5) * w, means, w, yerr=stds, capsize=3,
+                label=f"{exp}: {tire} tire")
+    ax1.axhline(kin[j] * 100, color="gray", ls="--", lw=1, label="Kinematic (ref.)")
+    ax1.set_xticks(x)
+    ax1.set_xticklabels([b[2] for b in bars])
+    ax1.set_ylabel("lateral error RMS on arcs [cm]")
+    ax1.set_title(f"Error decomposition at $a_y/\\mu g$ = {ay_ratio[j]:.2f}")
+    ax1.grid(alpha=0.3, axis="y"); ax1.legend()
+    plt.tight_layout()
+    plt.savefig("fig1_decomposition.png", dpi=150)
+
+    # ---------------- 그림 2: slip 조건 보정기 비교 ----------------
+    fig2, axes = plt.subplots(1, 2, figsize=(13, 4.5), sharey=True)
     styles = {"PP": ("tab:gray", "o"), "Formula": ("k", "s"),
               "LUT": ("tab:orange", "^"), "MLP": ("tab:blue", "D")}
-    for ax, exp, title in zip(axes, ["E1", "E2"],
-                              ["E1: linear tire", "E2: Pacejka tire"]):
-        ax.plot(ay_ratio, kin * 100, "--", color="lightgray", label="Kinematic (ref.)")
+    for ax, (exp, tire) in zip(axes, exps):
         for n in ctrl_names:
-            a = to_array(results[(exp, n)], "arc_rms") * 100
+            a = to_array(results[(exp, "slip", n)], "arc_rms") * 100
             color, marker = styles[n]
-            label = "PP (no corr.)" if n == "PP" else f"PP + {n}"
+            label = "PP + slip" if n == "PP" else f"PP + slip + {n}"
             ax.errorbar(ay_ratio, a.mean(axis=0), yerr=a.std(axis=0),
                         color=color, marker=marker, capsize=3, label=label)
-        ax.set_title(title)
+        ax.set_title(f"{exp}: {tire} tire (slip-aware heading)")
         ax.set_xlabel(r"$a_y / \mu g$")
         ax.grid(alpha=0.3); ax.legend()
     axes[0].set_ylabel("lateral error RMS on arcs [cm]")
     plt.tight_layout()
-    plt.savefig("experiments_E1_E2.png", dpi=150)
-    print(f"saved experiments_E1_E2.png  (총 {time.time() - t_start:.0f} s)")
+    plt.savefig("fig2_slip_comparison.png", dpi=150)
+
+    print(f"saved fig1_decomposition.png, fig2_slip_comparison.png  "
+          f"(총 {time.time() - t_start:.0f} s)")
     plt.show()
