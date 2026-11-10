@@ -50,8 +50,13 @@ def train_correctors(tire, seed, train_ratio=0.8):
 
 
 def to_array(runs, key):
-    """runs[seed][speed] = dict  →  배열 (seed 수, 속도 수)"""
-    return np.array([[m[key] for m in row] for row in runs])
+    result = []
+    for row in runs:
+        values = []
+        for m in row:
+            values.append(m[key])
+        result.append(values)
+    return np.array(result)
 
 
 if __name__ == "__main__":
