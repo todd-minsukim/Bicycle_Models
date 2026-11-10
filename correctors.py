@@ -1,15 +1,8 @@
-"""
-correctors.py
-보정기 3종. 모두 같은 형태로 사용:
-    c = XxxCorrection().fit(v, kappa, dd)     # 학습
-    c(v, kappa) -> Δδ [rad]                   # 사용
-"""
 import numpy as np
 
 
 class FormulaCorrection:
-    """해석적 보정: Δδ = K · v² · κ  (언더스티어 공식 K_us·a_y 꼴)
-    K는 시뮬레이터 참값이 아니라 데이터에서 최소제곱으로 피팅 (공정한 비교)"""
+    """해석적 보정: 언더스티어 공식 적용 + K는 공정한 비교를 위해 시뮬레이터 참값이 아니라 데이터에서 최소제곱으로 피팅"""
     name = "Formula"
 
     def fit(self, v, kappa, dd):
@@ -22,8 +15,7 @@ class FormulaCorrection:
 
 
 class LUTCorrection:
-    """룩업테이블 보정: 데이터 점들 사이를 선형 보간.
-    데이터 범위 밖이면 가장 가까운 점 값을 사용"""
+    """룩업테이블 보정: 데이터 점들 사이를 선형 보간"""
     name = "LUT"
 
     def fit(self, v, kappa, dd):
@@ -44,12 +36,14 @@ class LUTCorrection:
 
 
 class MLPCorrection:
-    """신경망 보정: 입력 (v, κ) → 은닉층 2개(각 32개, tanh) → Δδ
-    학습은 PyTorch, 시뮬레이션 중 계산은 numpy (빠르게)"""
+    """신경망 보정: 학습은 PyTorch, 시뮬레이션 중 빠른 계산을 위해 numpy"""
     name = "MLP"
 
     def __init__(self, hidden=32, epochs=3000, lr=1e-2, seed=0):
-        self.hidden, self.epochs, self.lr, self.seed = hidden, epochs, lr, seed
+        self.hidden = hidden
+        self.epochs = epochs
+        self.lr = lr
+        self.seed = seed
 
     def fit(self, v, kappa, dd):
         import torch
@@ -79,8 +73,13 @@ class MLPCorrection:
                 print(f"    MLP epoch {ep:5d}  loss {loss.item():.5f}")
 
         # 학습된 가중치를 numpy로 꺼내 둠
-        self.layers = [(m.weight.detach().numpy(), m.bias.detach().numpy())
-                       for m in net if isinstance(m, nn.Linear)]
+        self.layers = []
+        for m in net:
+            if m is isinstance(m,nn.Linear):
+                W = m.weight.detach().numpy()
+                b = m.weight.detach().numpy()
+                self.layers.append((W,b))
+                       
         return self
 
     def __call__(self, v, kappa):
