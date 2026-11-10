@@ -37,9 +37,8 @@ def _build(segments, ds, closed, name):
         psi = psi_b[i] + K0[i] * u + 0.5 * (K1[i] - K0[i]) * u**2 / Ls[i]   # ∫κ ds (정확)
         return kap, psi, LAB[i]
 
-    # 점 개수가 정수가 되도록 ds를 살짝 조정
     n = int(round(total / ds))
-    sub = 20                                           # 위치 적분용 세분화 배수
+    sub = 20                                           # 더 세밀한 위치 적분을 위해
     sf = np.linspace(0.0, total, n * sub + 1)
     _, psif, _ = eval_profile(sf)
     h = sf[1] - sf[0]
@@ -79,19 +78,3 @@ def make_oval(R=2.0, straight=6.0, transition=0.5, ds=0.02):
                 + [(straight / 2, 0.0, 0.0, STRAIGHT)])
     return _build(segments, ds, closed=True, name=f"oval (R={R} m)")
 
-
-def make_s_track(R=2.0, arc_deg=90.0, n_arcs=4, lead=4.0, transition=0.0, ds=0.02):
-    k = 1.0 / R
-    arc = R * np.deg2rad(arc_deg)
-    segments = [(lead, 0.0, 0.0, STRAIGHT)]
-    k_prev = 0.0
-    for i in range(n_arcs):
-        k_i = k if i % 2 == 0 else -k
-        if transition > 0:
-            segments.append((transition, k_prev, k_i, CLOTHOID))
-        segments.append((arc, k_i, k_i, ARC))
-        k_prev = k_i
-    if transition > 0:
-        segments.append((transition, k_prev, 0.0, CLOTHOID))
-    segments.append((lead, 0.0, 0.0, STRAIGHT))
-    return _build(segments, ds, closed=False, name=f"S-track (R={R} m)")
