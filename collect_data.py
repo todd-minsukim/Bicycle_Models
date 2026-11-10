@@ -5,7 +5,6 @@ from bicycle_models import VehicleParams, DynamicBicycle, steady_state_curvature
 
 
 def collect(tire, speeds, deltas, p, ay_limit=0.8, noise_std=0.005, seed=0):
-    """한 타이어 모델에서 (v, κ, δ) 데이터 수집"""
     rng = np.random.default_rng(seed)        # 노이즈용 난수 (seed 고정 → 매번 같은 결과)
     model = DynamicBicycle(p, tire=tire)
     rows = []
@@ -33,7 +32,6 @@ def collect(tire, speeds, deltas, p, ay_limit=0.8, noise_std=0.005, seed=0):
 
 
 def save(data, p, filename, test_ratio=0.2, seed=0):
-    """잔차 계산 + 학습/테스트 분할 후 저장"""
     v, kappa, delta = data[:, 0], data[:, 1], data[:, 2]
     dd = delta - np.arctan(p.L * kappa)                # 보정기가 배울 목표: Δδ
 
