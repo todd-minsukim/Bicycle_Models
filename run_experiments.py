@@ -183,5 +183,5 @@ if __name__ == "__main__":
         fig.tight_layout()
         fig.savefig(fig_names[exp], dpi=300)
 
-    print(f"saved decomposition.png, {', '.join(fig_names.values())}  "
+    print(f"saved decomposition.png, {', '.join(fig_names.values())}")
     plt.show()
