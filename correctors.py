@@ -75,7 +75,7 @@ class MLPCorrection:
         # 학습된 가중치를 numpy로 꺼내 둠
         self.layers = []
         for m in net:
-            if m is isinstance(m,nn.Linear):
+            if isinstance(m,nn.Linear):
                 W = m.weight.detach().numpy()
                 b = m.weight.detach().numpy()
                 self.layers.append((W,b))
