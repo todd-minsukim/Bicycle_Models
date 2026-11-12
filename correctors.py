@@ -77,7 +77,7 @@ class MLPCorrection:
         for m in net:
             if isinstance(m,nn.Linear):
                 W = m.weight.detach().numpy()
-                b = m.weight.detach().numpy()
+                b = m.bias.detach().numpy()
                 self.layers.append((W,b))
                        
         return self
