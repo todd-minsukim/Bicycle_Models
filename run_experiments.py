@@ -162,11 +162,13 @@ if __name__ == "__main__":
     plt.tight_layout()
     plt.savefig("fig1_decomposition.png", dpi=150)
 
-    # ---------------- 그림 2: slip 조건 보정기 비교 ----------------
-    fig2, axes = plt.subplots(1, 2, figsize=(13, 4.5), sharey=True)
+    # ---------------- 그림 2,3: E1, E2 ----------------
     styles = {"PP": ("tab:gray", "o"), "Formula": ("k", "s"),
               "LUT": ("tab:orange", "^"), "MLP": ("tab:blue", "D")}
-    for ax, (exp, tire) in zip(axes, exps):
+    fig_names = {"E1": "E1_linear.png", "E2": "E2_pacejka.png"}
+
+    for exp, tire in exps:
+        fig, ax = plt.subplots(figsize=(6.5, 4.5))
         for n in ctrl_names:
             a = to_array(results[(exp, "slip", n)], "arc_rms") * 100
             color, marker = styles[n]
@@ -175,11 +177,11 @@ if __name__ == "__main__":
                         color=color, marker=marker, capsize=3, label=label)
         ax.set_title(f"{exp}: {tire} tire (slip-aware heading)")
         ax.set_xlabel(r"$a_y / \mu g$")
-        ax.grid(alpha=0.3); ax.legend()
-    axes[0].set_ylabel("lateral error RMS on arcs [cm]")
-    plt.tight_layout()
-    plt.savefig("fig2_slip_comparison.png", dpi=150)
+        ax.set_ylabel("lateral error RMS on arcs [cm]")
+        ax.grid(alpha=0.3)
+        ax.legend()
+        fig.tight_layout()
+        fig.savefig(fig_names[exp], dpi=300)
 
-    print(f"saved fig1_decomposition.png, fig2_slip_comparison.png  "
-          f"(총 {time.time() - t_start:.0f} s)")
+    print(f"saved decomposition.png, {', '.join(fig_names.values())}  "
     plt.show()
