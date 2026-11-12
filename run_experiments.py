@@ -38,7 +38,7 @@ def metrics(log, path, v, skip_laps=1):
     return {
         "arc_rms": rms(e[on_arc]),
         "arc_max": float(np.max(np.abs(e[on_arc]))),
-        "arc_mean": float(np.mean(e_out[on_arc]))
+        "arc_mean": float(np.mean(e_out[on_arc])),
         "steer_rate": rms(steer_rate[after[1:]]),
     }
 
