@@ -1,7 +1,3 @@
-"""
-fit_correctors.py
-4단계: 보정기 3종 학습 → 테스트 오차 → 학습된 곡선 그림
-"""
 import numpy as np
 import matplotlib.pyplot as plt
 
