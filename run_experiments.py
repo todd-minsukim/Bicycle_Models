@@ -29,9 +29,16 @@ def metrics(log, path, v, skip_laps=1):
     on_arc = after & (path.seg[log["idx"]] == ARC)
     e = log["e_y"]
     steer_rate = np.diff(log["delta"]) / np.diff(log["t"])
+    
+    # 부호 있는 횡오차: 코너 바깥 +, 안쪽 −
+    # e_y는 경로 왼쪽이 +라서, 좌회전(κ>0)이면 왼쪽 = 안쪽 → 부호를 뒤집음
+    k_sign = np.sign(path.kappa[log["idx"]])
+    e_out = -k_sign * e
+    
     return {
         "arc_rms": rms(e[on_arc]),
         "arc_max": float(np.max(np.abs(e[on_arc]))),
+        "arc_mean": float(np.mean(e_out[on_arc]))
         "steer_rate": rms(steer_rate[after[1:]]),
     }
 
