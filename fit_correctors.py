@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from bicycle_models import VehicleParams, G
-from correctors import FormulaCorrection, LUTCorrection, MLPCorrection
+from correctors import FormulaCorrection, PolyCorrection, LUTCorrection, MLPCorrection
 
 
 def load(tire):
@@ -18,6 +18,7 @@ def fit_all(tire):
     formula = FormulaCorrection()
     formula.K = VehicleParams().K_us
     return [formula,
+            PolyCorrection().fit(v[tr], k[tr], dd[tr]),
             LUTCorrection().fit(v[tr], k[tr], dd[tr]),
             MLPCorrection().fit(v[tr], k[tr], dd[tr])]
 
@@ -36,8 +37,7 @@ if __name__ == "__main__":
             pred = np.array([c(vi, ki) for vi, ki in zip(v[is_test], k[is_test])])
             rmse = np.sqrt(np.mean((pred - dd[is_test]) ** 2))
             print(f"    {c.name:8s} {rmse*1000:6.2f} mrad")
-        if isinstance(correctors[0], FormulaCorrection):
-            print(f"    피팅된 K = {correctors[0].K:.5f}  (시뮬레이터 참값 K_us = {p.K_us:.5f})")
+            
 
         # 그림: 왼쪽 선회 데이터 점 + 각 보정기 곡선 (속도 3개)
         left = k > 0
