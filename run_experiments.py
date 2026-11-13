@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from bicycle_models import VehicleParams, KinematicBicycle, DynamicBicycle, simulate, G
 from paths import make_oval, ARC
 from pure_pursuit import PurePursuit
-from correctors import FormulaCorrection, LUTCorrection, MLPCorrection
+from correctors import FormulaCorrection, PolyCorrection, LUTCorrection, MLPCorrection
 
 QUICK = False     # True: 속도 3개, 반복 1회 (코드 확인용, 3~5분)
 
@@ -53,6 +53,7 @@ def train_correctors(tire, seed, train_ratio=0.8, suffix=""):
     formula.K = VehicleParams().K_us
     return {
         "Formula": formula,
+        "Poly": PolyCorrection().fit(v[tr], k[tr], dd[tr]),
         "LUT": LUTCorrection().fit(v[tr], k[tr], dd[tr]),
         "MLP": MLPCorrection(seed=seed).fit(v[tr], k[tr], dd[tr]),
     }
@@ -80,7 +81,7 @@ if __name__ == "__main__":
     ay_ratio = np.array([v ** 2 * kmax / (p.mu * G) for v in speeds])
     exps = [("E1", "linear"), ("E2", "pacejka")]
     modes = ["yaw", "slip"]
-    ctrl_names = ["PP", "Formula", "LUT", "MLP"]
+    ctrl_names = ["PP", "Formula", "Poly", "LUT", "MLP"]
 
     # 참고선: 기구학 모델
     print("Kinematic 참고선 ...")
@@ -101,7 +102,7 @@ if __name__ == "__main__":
             results[(exp, mode, "PP")] = [
                 [metrics(run(model, path, v, None, slip), path, v) for v in speeds]]
 
-            for name in ["Formula", "LUT", "MLP"]:
+            for name in ["Formula", "Poly","LUT", "MLP"]:
                 results[(exp, mode, name)] = []
                 for seed in seeds:
                     print(f"[{exp}/{mode}] {name} seed {seed} ...  "
@@ -170,7 +171,7 @@ if __name__ == "__main__":
     plt.savefig("fig1_decomposition.png", dpi=150)
 
     # ---------------- 그림 2,3: E1, E2 ----------------
-    styles = {"PP": ("tab:gray", "o"), "Formula": ("k", "s"),
+    styles = {"PP": ("tab:gray", "o"), "Formula": ("k", "s"), "Poly": ("tab:green", "v"), 
               "LUT": ("tab:orange", "^"), "MLP": ("tab:blue", "D")}
     fig_names = {"E1": "E1_linear.png", "E2": "E2_pacejka.png"}
 
