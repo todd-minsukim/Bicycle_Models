@@ -52,7 +52,7 @@ def train_correctors(tire, seed, train_ratio=0.8, suffix=""):
     formula = FormulaCorrection()
     formula.K = VehicleParams().K_us
     return {
-        "Formula": FormulaCorrection().fit(v[tr], k[tr], dd[tr]),
+        "Formula": formula,
         "LUT": LUTCorrection().fit(v[tr], k[tr], dd[tr]),
         "MLP": MLPCorrection(seed=seed).fit(v[tr], k[tr], dd[tr]),
     }
@@ -75,8 +75,6 @@ if __name__ == "__main__":
 
     speeds = [2.0, 2.5, 2.8, 3.0, 3.2, 3.4, 3.6, 3.8]
     seeds = [0, 1, 2]
-    if QUICK:
-        speeds, seeds = [2.5, 3.2, 3.8], [0]
 
     kmax = np.max(np.abs(path.kappa))
     ay_ratio = np.array([v ** 2 * kmax / (p.mu * G) for v in speeds])
