@@ -43,9 +43,9 @@ def metrics(log, path, v, skip_laps=1):
     }
 
 
-def train_correctors(tire, seed, train_ratio=0.8):
+def train_correctors(tire, seed, train_ratio=0.8, suffix=""):
     """seed마다 학습 데이터 80%를 다르게 뽑아 보정기 3종 학습"""
-    d = np.load(f"data_{tire}.npz")
+    d = np.load(f"data_{tire}{suffix}.npz")
     v, k, dd = d["v"], d["kappa"], d["dd"]
     rng = np.random.default_rng(seed)
     tr = rng.random(len(v)) < train_ratio
