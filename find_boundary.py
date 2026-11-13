@@ -22,7 +22,7 @@ if __name__ == "__main__":
                        0.74, 0.77, 0.80, 0.83, 0.86, 0.89, 0.92])
     speeds = np.sqrt(ratios * p.mu * G / kmax)          # a_y/μg → 속도
     seeds = [0, 1, 2]
-    names = ["Formula", "LUT", "MLP"]
+    names = ["Formula", "Poly", "LUT", "MLP"]
     print("speeds [m/s]:", np.round(speeds, 3))
 
     res = {}
