@@ -15,6 +15,8 @@ def fit_all(tire):
     v, k, dd, is_test = load(tire)
     tr = ~is_test
     print(f"[{tire}] 학습 {tr.sum()}개")
+    formula = FormulaCorrection()
+    formula.K = VehicleParams().K_us
     return [FormulaCorrection().fit(v[tr], k[tr], dd[tr]),
             LUTCorrection().fit(v[tr], k[tr], dd[tr]),
             MLPCorrection().fit(v[tr], k[tr], dd[tr])]
@@ -41,7 +43,7 @@ if __name__ == "__main__":
         left = k > 0
         ax.scatter(v[left] ** 2 * k[left], dd[left] * 1000, s=6, color="lightgray", label="data")
         for vv, ls in [(2.0, ":"), (3.0, "--"), (3.8, "-")]:
-            kk = np.linspace(0.01, 0.8 * p.mu * G / vv ** 2, 60)
+            kk = np.linspace(0.01, p.mu * G / vv ** 2, 60)
             for c, color in zip(correctors, ["k", "tab:orange", "tab:blue"]):
                 y = [c(vv, ki) * 1000 for ki in kk]
                 ax.plot(vv ** 2 * kk, y, ls, color=color,
