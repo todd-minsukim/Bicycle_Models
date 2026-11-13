@@ -28,7 +28,7 @@ if __name__ == "__main__":
     for exp, tire in [("E1", "linear"), ("E2", "pacejka")]:
         model = DynamicBicycle(p, tire=tire)
         for seed in seeds:
-            c = train_correctors(tire, seed, suffix="_wide")
+            c = train_correctors(tire, seed)
             for name in names:
                 print(f"[{exp}] {name} seed {seed}  ({time.time() - t0:.0f} s)")
                 row = []
