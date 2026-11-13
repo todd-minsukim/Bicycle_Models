@@ -44,7 +44,7 @@ if __name__ == "__main__":
         ax.scatter(v[left] ** 2 * k[left], dd[left] * 1000, s=6, color="lightgray", label="data")
         for vv, ls in [(2.0, ":"), (3.0, "--"), (3.8, "-")]:
             kk = np.linspace(0.01, p.mu * G / vv ** 2, 60)
-            for c, color in zip(correctors, ["k", "tab:orange", "tab:blue"]):
+            for c, color in zip(correctors, ["k", "tab:green", "tab:orange", "tab:blue"]):
                 y = [c(vv, ki) * 1000 for ki in kk]
                 ax.plot(vv ** 2 * kk, y, ls, color=color,
                         label=f"{c.name}" if vv == 3.8 else None)
