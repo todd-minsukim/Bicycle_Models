@@ -8,7 +8,8 @@ d = np.load("boundary_results.npz")
 r = d["ratios"]
 
 # ---- 그림 A: E2 세 보정기 (회색 PP 제외) ----
-styles = {"Formula": ("k", "s"), "LUT": ("tab:orange", "^"), "MLP": ("tab:blue", "D")}
+styles = {"Formula": ("k", "s"), "Poly": ("tab:green", "v"),
+          "LUT": ("tab:orange", "^"), "MLP": ("tab:blue", "D")}
 fig, ax = plt.subplots(figsize=(6.5, 4.5))
 for n, (c, mk) in styles.items():
     a = d[f"E2_{n}_arc_rms"] * 100
