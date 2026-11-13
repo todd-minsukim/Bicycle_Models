@@ -12,7 +12,20 @@ class FormulaCorrection:
 
     def __call__(self, v, kappa):
         return self.K * v * v * kappa
+        
+class PolyCorrection:
+    """다항식 보정: Δδ = K1·a_y + K3·a_y³ (비선형을 반영한 해석적 보정), 계수는 데이터로 최소제곱 피팅"""
+    name = "Poly"
+    
+    def fit(self, v, kappa, dd):
+        a = v ** 2 * kappa                                  # 부호 있는 a_y
+        A = np.stack([a, a ** 3], axis=1)                   # 홀수 차수만 → 좌우 대칭
+        (self.K1, self.K3), *_ = np.linalg.lstsq(A, dd, rcond=None)
+        return self
 
+    def __call__(self, v, kappa):
+        a = v ** 2 * kappa
+        return float(self.K1 * a + self.K3 * a ** 3)
 
 class LUTCorrection:
     """룩업테이블 보정: 데이터 점들 사이를 선형 보간"""
