@@ -51,19 +51,3 @@ if __name__ == "__main__":
     for tire, marker in [("linear", "o"), ("pacejka", "x")]:
         data = collect(tire, speeds, deltas, p)
         save(data, p, f"data_{tire}.npz")
-
-        # 확인용 그림: 왼쪽 선회(κ > 0) 데이터만, Δδ vs a_y
-        left = data[:, 1] > 0
-        v, k, d = data[left, 0], data[left, 1], data[left, 2]
-        ax.scatter(v ** 2 * k, d - np.arctan(p.L * k), s=10, marker=marker, label=tire)
-
-    a = np.linspace(0, 0.8 * p.mu * G, 50)
-    ax.plot(a, p.K_us * a, "k-", lw=1.5, label=r"formula $K_{us} a_y$")
-    ax.set_xlabel(r"$a_y = v^2 \kappa$ [m/s$^2$]")
-    ax.set_ylabel(r"$\Delta\delta = \delta - \mathrm{atan}(L\kappa)$ [rad]")
-    ax.set_title("Collected steady-state data")
-    ax.grid(alpha=0.3); ax.legend()
-    plt.tight_layout()
-    plt.savefig("data_check.png", dpi=150)
-    print("saved data_check.png")
-    plt.show()
