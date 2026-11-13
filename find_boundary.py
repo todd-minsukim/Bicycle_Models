@@ -18,9 +18,10 @@ if __name__ == "__main__":
     path = make_oval()
     kmax = np.max(np.abs(path.kappa))
 
-    ratios = np.array([0.66, 0.70, 0.74, 0.77, 0.80, 0.83, 0.86, 0.89, 0.92, 0.95])
+    ratios = np.array([0.20, 0.32, 0.40, 0.50, 0.59, 0.66, 0.70,
+                       0.74, 0.77, 0.80, 0.83, 0.86, 0.89, 0.92])
     speeds = np.sqrt(ratios * p.mu * G / kmax)          # a_y/μg → 속도
-    seeds = [0, 1, 2, 3, 4]
+    seeds = [0, 1, 2]
     names = ["Formula", "LUT", "MLP"]
     print("speeds [m/s]:", np.round(speeds, 3))
 
