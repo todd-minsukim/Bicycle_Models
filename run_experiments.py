@@ -49,6 +49,8 @@ def train_correctors(tire, seed, train_ratio=0.8, suffix=""):
     v, k, dd = d["v"], d["kappa"], d["dd"]
     rng = np.random.default_rng(seed)
     tr = rng.random(len(v)) < train_ratio
+    formula = FormulaCorrection()
+    formula.K = VehicleParams().K_us
     return {
         "Formula": FormulaCorrection().fit(v[tr], k[tr], dd[tr]),
         "LUT": LUTCorrection().fit(v[tr], k[tr], dd[tr]),
