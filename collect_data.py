@@ -44,10 +44,10 @@ def save(data, p, filename, test_ratio=0.2, seed=0):
 
 if __name__ == "__main__":
     p = VehicleParams()
-    speeds = np.linspace(1.5, 4.0, 11)     # 1.5, 1.75, ..., 4.0
-    deltas = np.linspace(0.0, 0.30, 31)    # 0.00, 0.01, ..., 0.30
+    speeds = np.linspace(1.0, 4.5, 15)     # 1.5, 1.75, ..., 4.0
+    deltas = np.linspace(0.0, 0.40, 41)    # 0.00, 0.01, ..., 0.30
 
     fig, ax = plt.subplots(figsize=(7, 4))
     for tire, marker in [("linear", "o"), ("pacejka", "x")]:
-        data = collect(tire, speeds, deltas, p)
+        data = collect(tire, speeds, deltas, p, ay_limit=1.0)
         save(data, p, f"data_{tire}.npz")
