@@ -17,7 +17,7 @@ def fit_all(tire):
     print(f"[{tire}] 학습 {tr.sum()}개")
     formula = FormulaCorrection()
     formula.K = VehicleParams().K_us
-    return [FormulaCorrection().fit(v[tr], k[tr], dd[tr]),
+    return [formula,
             LUTCorrection().fit(v[tr], k[tr], dd[tr]),
             MLPCorrection().fit(v[tr], k[tr], dd[tr])]
 
