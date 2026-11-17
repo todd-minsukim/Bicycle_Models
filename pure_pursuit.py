@@ -9,7 +9,7 @@ def wrap(a):
 
 class PurePursuit:
     def __init__(self, path, params, speed, k_ld=0.3, ld_min=0.3, search_window=40,
-                 corrector=None, use_slip=False):
+                 corrector=None, use_slip=False, slip_linear_pred=False):
         # 파라미터
         self.path = path              # paths.py의 Path
         self.p = params               # VehicleParams (L, lr, delta_max 사용)
@@ -41,8 +41,13 @@ class PurePursuit:
         yr = y - self.p.lr * math.sin(yaw)
         heading = yaw
         if self.use_slip and len(s) == 5:              # 동역학 모델일 때만
-            vy, r = s[3], s[4]
-            heading = yaw + math.atan2(vy - self.p.lr * r, self.v)   # 뒷축 속도 방향
+            if self.slip_linear_pred:
+                kappa = self.path.kappa[self.nearest_idx]
+                alpha_r = self.p.m * self.v**2 * k * self.p.lf / (self.p.L * self.p.Car)
+                heading = yaw - alpha_r
+            else:
+                vy, r = s[3], s[4]
+                heading = yaw + math.atan2(vy - self.p.lr * r, self.v)   # 뒷축 속도 방향
         return xr, yr, heading
 
     # ---------- 계산 ----------
