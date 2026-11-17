@@ -24,7 +24,7 @@ modes = {"yaw": (False, False), "slip": (True, False), "pred": (True, True)}
 # pred가 slip과 비슷하고 yaw보다 작으면 부호가 맞게 들어간 것
 print("PP only, arc RMS [cm]")
 for j, v in enumerate(speeds):
-    row = [metrics(run(model, path, v, None, u, slip_pred=pr), path, v)["arc_rms"] * 100
+    row = [metrics(run(model, path, v, None, u, slip_linear_pred=pr), path, v)["arc_rms"] * 100
            for u, pr in modes.values()]
     print(f"  a_y/mug={ay_ratio[j]:.2f}   yaw {row[0]:6.2f}   slip {row[1]:6.2f}   pred {row[2]:6.2f}")
 
@@ -34,7 +34,7 @@ for mode in ["slip", "pred"]:
     u, pr = modes[mode]
     for name in ["Formula", "MLP"]:
         print(f"[{mode}] {name} ...  ({time.time() - t0:.0f} s)")
-        res[(mode, name)] = [[metrics(run(model, path, v, trained[s][name], u, slip_pred=pr), path, v)
+        res[(mode, name)] = [[metrics(run(model, path, v, trained[s][name], u, slip_linear_pred=pr), path, v)
                               for v in speeds] for s in seeds]
 
 save = {"speeds": np.array(speeds), "ay_ratio": ay_ratio}
