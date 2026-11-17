@@ -44,7 +44,7 @@ class PurePursuit:
         if self.use_slip and len(s) == 5:              # 동역학 모델일 때만
             if self.slip_linear_pred:
                 kappa = self.path.kappa[self.nearest_idx]
-                alpha_r = self.p.m * self.v**2 * k * self.p.lf / (self.p.L * self.p.Car)
+                alpha_r = self.p.m * self.v**2 * kappa * self.p.lf / (self.p.L * self.p.Car)
                 heading = yaw - alpha_r
             else:
                 vy, r = s[3], s[4]
