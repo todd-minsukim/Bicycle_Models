@@ -10,7 +10,7 @@ from correctors import FormulaCorrection, PolyCorrection, LUTCorrection, MLPCorr
 QUICK = False     # True: 속도 3개, 반복 1회 (코드 확인용, 3~5분)
 
 
-def run(model, path, v, corrector=None, use_slip=False, n_laps=3, dt=0.002):
+def run(model, path, v, corrector=None, use_slip=False, n_laps=3, dt=0.002, slip_linear_pred=False):
     """한 조건으로 오벌 n_laps 바퀴 주행 → 기록 반환"""
     pp = PurePursuit(path, model.p, speed=v, corrector=corrector, use_slip=use_slip, slip_linear_pred=slip_linear_pred)
     s0 = model.initial_state(x=model.p.lr, y=0.0, psi=0.0)
