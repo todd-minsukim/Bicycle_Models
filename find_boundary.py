@@ -14,7 +14,9 @@ def sat_ratio(log, path, v, p, skip_laps=1):
 
 if __name__ == "__main__":
     t0 = time.time()
-    p = VehicleParams()
+    MU = 0.8
+    SUFFIX = "" if MU == 1.0 else "_mu08"
+    p = VehicleParams(mu=MU)
     path = make_oval()
     kmax = np.max(np.abs(path.kappa))
 
@@ -29,7 +31,7 @@ if __name__ == "__main__":
     for exp, tire in [("E1", "linear"), ("E2", "pacejka")]:
         model = DynamicBicycle(p, tire=tire)
         for seed in seeds:
-            c = train_correctors(tire, seed)
+            c = train_correctors(tire, seed, suffix=SUFFIX)
             for name in names:
                 print(f"[{exp}] {name} seed {seed}  ({time.time() - t0:.0f} s)")
                 row = []
@@ -67,5 +69,5 @@ if __name__ == "__main__":
         for n in names:
             for key in ["arc_rms", "arc_mean", "steer_rate", "sat"]:
                 save[f"{e}_{n}_{key}"] = to_array(res[(e, n)], key)
-    np.savez("boundary_results.npz", **save)
+    np.savez("boundary_results{SUFFIX}.npz", **save)
     print(f"\nsaved boundary_results.npz  (총 {time.time() - t0:.0f} s)")
