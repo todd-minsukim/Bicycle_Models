@@ -44,6 +44,7 @@ def save(data, p, filename, test_ratio=0.2, seed=0):
 
 if __name__ == "__main__":
     p = VehicleParams()
+    p08 = VehicleParams(mu=0.8)
     speeds = np.linspace(1.0, 4.5, 15)     # 1.5, 1.75, ..., 4.0
     deltas = np.linspace(0.0, 0.40, 41)    # 0.00, 0.01, ..., 0.30
 
@@ -51,3 +52,7 @@ if __name__ == "__main__":
     for tire, marker in [("linear", "o"), ("pacejka", "x")]:
         data = collect(tire, speeds, deltas, p, ay_limit=1.0)
         save(data, p, f"data_{tire}.npz")
+
+    for tire in ["linear","pacejka"]:
+        data = collect(tire, speeds, deltas, p08, ay_limit=1.0)
+        save(data, p08, f"data_{tire}_mu08.npz")
