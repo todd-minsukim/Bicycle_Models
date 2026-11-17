@@ -19,6 +19,7 @@ class PurePursuit:
         self.window = search_window   # 최근접 점 검색 범위 [점 개수]
         self.corrector = corrector    # None이면 보정 없음 (베이스라인)
         self.use_slip = use_slip
+        self.slip_linear_pred = slip_linear_pred
 
         # 상태
         self.N = len(path.x)
